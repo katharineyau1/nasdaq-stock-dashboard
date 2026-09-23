@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nasdaq-10 Real-Time Stock Dashboard</title>
+    <meta name="description" content="Live tracking and analytics for the top 10 US stocks traded on Nasdaq. Custom Glassmorphic design, real-time auto-refresh, and interactive trend charts.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- HEADER SECTION -->
+        <header class="app-header">
+            <div class="header-branding">
+                <div class="logo-glow"></div>
+                <div class="logo-icon"><i class="fa-solid fa-chart-line-up"></i></div>
+                <div>
+                    <h1>NASDAQ<span class="accent-text">-10</span></h1>
+                    <p class="subtitle">Real-Time Market Analytics</p>
+                </div>
+            </div>
+            
+            <div class="header-meta">
+                <div id="market-status" class="market-status-pill closed">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">Checking Market...</span>
+                </div>
+                
+                <div class="refresh-control">
+                    <div class="timer-circle-container">
+                        <svg class="timer-svg" viewBox="0 0 36 36">
+                            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="timer-progress" class="timer-progress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <span id="countdown-text" class="countdown-seconds">60</span>
+                    </div>
+                    <div class="refresh-details">
+                        <span class="refresh-label">Next Update</span>
+                        <span id="last-updated-time" class="refresh-time">Never</span>
+                    </div>
+                    <button id="manual-refresh-btn" class="action-btn circle-btn" title="Force Refresh Data">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- SUMMARY HIGHLIGHT TILES -->
+        <section class="summary-section">
+            <!-- Total Market Cap -->
+            <div class="summary-tile glass-card">
+                <div class="tile-icon cap-icon"><i class="fa-solid fa-vault"></i></div>
+                <div class="tile-content">
+                    <span class="tile-label">Nasdaq-10 Cap</span>
+                    <h2 id="summary-total-cap" class="tile-value">—</h2>
+                    <span class="tile-desc">Combined Valuation</span>
+                </div>
+            </div>
+            
+            <!-- Top Gainer -->
+            <div class="summary-tile glass-card">
+                <div class="tile-icon gainer-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                <div class="tile-content">
+                    <span class="tile-label">Top Gainer</span>
+                    <h2 id="summary-gainer-val" class="tile-value">—</h2>
+                    <span id="summary-gainer-name" class="tile-desc">—</span>
+                </div>
+            </div>
+
+            <!-- Top Loser -->
+            <div class="summary-tile glass-card">
+                <div class="tile-icon loser-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                <div class="tile-content">
+                    <span class="tile-label">Top Loser</span>
+                    <h2 id="summary-loser-val" class="tile-value">—</h2>
+                    <span id="summary-loser-name" class="tile-desc">—</span>
+                </div>
+            </div>
+
+            <!-- Highest Volume -->
+            <div class="summary-tile glass-card">
+                <div class="tile-icon volume-icon"><i class="fa-solid fa-fire"></i></div>
+                <div class="tile-content">
+                    <span class="tile-label">Volume Leader</span>
+                    <h2 id="summary-volume-val" class="tile-value">—</h2>
+                    <span id="summary-volume-name" class="tile-desc">—</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- DASHBOARD CONTROLS -->
+        <div class="dashboard-controls">
+            <div class="search-bar-container glass-card">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="stock-search" placeholder="Search by ticker or name..." autocomplete="off">
+                <button id="clear-search-btn" class="clear-btn hide"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="view-switcher glass-card">
+                <button id="grid-view-btn" class="view-btn active" title="Grid View"><i class="fa-solid fa-grip"></i></button>
+                <button id="list-view-btn" class="view-btn" title="List View"><i class="fa-solid fa-list"></i></button>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main>
+            <!-- Loading Spinner -->
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="spinner-container">
+                    <div class="glowing-spinner"></div>
+                    <p class="loading-text">Fetching Nasdaq Market Data...</p>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="error-banner" class="error-banner hide">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="error-message">Unable to fetch live stock rates. Retrying...</span>
+            </div>
+
+            <!-- Stocks Content Wrapper -->
+            <div id="stocks-container" class="stocks-grid-view">
+                <!-- Stock elements generated dynamically -->
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>Data provided by Yahoo Finance • Refreshes automatically every 1 minute.</p>
+            <p class="footer-tag">Designed with <i class="fa-solid fa-heart accent-text animate-pulse"></i> by Antigravity</p>
+        </footer>
+    </div>
+
+    <!-- STOCK DETAILS MODAL OVERLAY -->
+    <div id="stock-details-modal" class="modal-overlay hide">
+        <div class="modal-content glass-card">
+            <button id="close-modal-btn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="modal-header">
+                <div class="modal-title-area">
+                    <div class="symbol-badge-container">
+                        <span id="modal-stock-symbol" class="symbol-badge">AAPL</span>
+                    </div>
+                    <div>
+                        <h2 id="modal-stock-name">Apple Inc.</h2>
+                        <span class="market-badge">NASDAQ Listed</span>
+                    </div>
+                </div>
+                <div class="modal-price-area">
+                    <div id="modal-stock-price" class="modal-price">$0.00</div>
+                    <div id="modal-stock-change" class="modal-change positive">+0.00 (+0.00%)</div>
+                </div>
+            </div>
+
+            <!-- History Chart -->
+            <div class="modal-chart-section">
+                <div class="chart-header">
+                    <h3>5-Day Price History (Hourly)</h3>
+                    <div class="chart-legend">
+                        <span class="legend-indicator"></span>
+                        <span class="legend-text">Stock Close Price ($)</span>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <!-- Canvas for Chart.js -->
+                    <canvas id="historyChart"></canvas>
+                    <div id="chart-loading" class="chart-loading hide">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Loading historical trend...</span>
+                    </div>
+                    <div id="chart-error" class="chart-error hide">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>Unable to load chart.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Statistics Grid -->
+            <div class="modal-stats-section">
+                <h3>Market Details</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Open</span>
+                        <span id="stat-open" class="stat-value">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Previous Close</span>
+                        <span id="stat-prev-close" class="stat-value">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Day's Range</span>
+                        <span id="stat-range" class="stat-value">$0.00 - $0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Trading Volume</span>
+                        <span id="stat-volume" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Market Capitalization</span>
+                        <span id="stat-market-cap" class="stat-value">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -260,6 +260,43 @@ body {
     letter-spacing: 0.5px;
 }
 
+.refresh-interval-control select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.45rem 0.55rem;
+}
+
+.refresh-interval-control select:focus {
+    border-color: var(--primary);
+    outline: 2px solid var(--primary-glow);
+    outline-offset: 1px;
+}
+
+.refresh-interval-control option {
+    background: var(--bg-modal);
+    color: var(--text-primary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .refresh-time {
     font-size: 0.8rem;
     color: var(--text-secondary);

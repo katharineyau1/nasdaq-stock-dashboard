@@ -2,7 +2,8 @@
 let stocksData = [];
 let viewMode = 'grid'; // 'grid' or 'list'
 let searchQuery = '';
-let refreshTimer = 60;
+let refreshIntervalSeconds = 3600;
+let refreshTimer = refreshIntervalSeconds;
 let timerInterval = null;
 let chartInstance = null;
 
@@ -14,6 +15,7 @@ const errorMessage = document.getElementById('error-message');
 const lastUpdatedTime = document.getElementById('last-updated-time');
 const countdownText = document.getElementById('countdown-text');
 const timerProgress = document.getElementById('timer-progress');
+const refreshIntervalSelect = document.getElementById('refresh-interval-select');
 const manualRefreshBtn = document.getElementById('manual-refresh-btn');
 const stockSearch = document.getElementById('stock-search');
 const clearSearchBtn = document.getElementById('clear-search-btn');
@@ -85,6 +87,11 @@ function setupEventListeners() {
         fetchStocks(true);
     });
 
+    refreshIntervalSelect.addEventListener('change', (event) => {
+        refreshIntervalSeconds = Number(event.target.value);
+        startTimer();
+    });
+
     // Search Input
     stockSearch.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase().trim();
@@ -129,13 +136,13 @@ function setupEventListeners() {
 // CONTROL TIMER
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
-    refreshTimer = 60;
+    refreshTimer = refreshIntervalSeconds;
     updateTimerUI();
     
     timerInterval = setInterval(() => {
         refreshTimer--;
-        if (refreshTimer < 0) {
-            refreshTimer = 60;
+        if (refreshTimer <= 0) {
+            refreshTimer = refreshIntervalSeconds;
             fetchStocks();
         }
         updateTimerUI();
@@ -143,10 +150,20 @@ function startTimer() {
 }
 
 function updateTimerUI() {
-    countdownText.textContent = refreshTimer;
+    const hours = Math.floor(refreshTimer / 3600);
+    const minutes = Math.floor((refreshTimer % 3600) / 60);
+    const seconds = refreshTimer % 60;
+
+    if (hours > 0) {
+        countdownText.textContent = `${hours}h`;
+    } else if (minutes > 0) {
+        countdownText.textContent = `${minutes}m`;
+    } else {
+        countdownText.textContent = `${seconds}s`;
+    }
     
     // Calculate circular stroke dash offset (svg circle total circumference is ~100)
-    const progress = (refreshTimer / 60) * 100;
+    const progress = (refreshTimer / refreshIntervalSeconds) * 100;
     timerProgress.style.strokeDasharray = `${progress}, 100`;
 }
 

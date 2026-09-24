@@ -48,6 +48,14 @@
                         <span class="refresh-label">Next Update</span>
                         <span id="last-updated-time" class="refresh-time">Never</span>
                     </div>
+                    <label class="refresh-interval-control" for="refresh-interval-select">
+                        <span class="sr-only">Refresh interval</span>
+                        <select id="refresh-interval-select" title="Choose automatic refresh interval">
+                            <option value="60">1 min</option>
+                            <option value="600">10 min</option>
+                            <option value="3600" selected>1 hour</option>
+                        </select>
+                    </label>
                     <button id="manual-refresh-btn" class="action-btn circle-btn" title="Force Refresh Data">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </button>
@@ -136,7 +144,7 @@
 
         <!-- FOOTER -->
         <footer class="app-footer">
-            <p>Data provided by Yahoo Finance • Refreshes automatically every 1 minute.</p>
+            <p>Data provided by Yahoo Finance • Automatic refresh interval is configurable.</p>
             <p class="footer-tag">Designed with <i class="fa-solid fa-heart accent-text animate-pulse"></i> by Antigravity</p>
         </footer>
     </div>

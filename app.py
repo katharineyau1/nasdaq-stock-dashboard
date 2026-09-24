@@ -30,7 +30,7 @@ NASDAQ_TOP_10 = {
 cache = {
     'data': None,
     'last_updated': 0,
-    'expiry': 60  # Cache duration in seconds (1 minute)
+    'expiry':  60 # Cache duration in seconds (1 minute)
 }
 
 

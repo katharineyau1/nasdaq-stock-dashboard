@@ -548,18 +548,48 @@ async function drawHistoryChart(symbol, isPositive) {
     }
 
     try {
+        console.debug('[history] Chart.js:', typeof Chart);
+        if (typeof Chart === 'undefined') {
+            throw new Error('Chart.js failed to load');
+        }
+
         const response = await fetch(`/api/stocks/${symbol}/history`);
-        if (!response.ok) throw new Error('History fetch failed');
-        
+        console.debug('[history] HTTP response:', {
+            symbol,
+            status: response.status,
+            ok: response.ok,
+            contentType: response.headers.get('content-type')
+        });
+
         const data = await response.json();
-        const history = data.history;
+        console.debug('[history] API response JSON:', JSON.stringify(data));
+
+        if (!response.ok) {
+            throw new Error(data.error || `History fetch failed (${response.status})`);
+        }
+
+        const history = Array.isArray(data.history)
+            ? data.history.filter(point => (
+                point && Number.isFinite(Number(point.price)) && point.label
+            ))
+            : [];
+
+        console.debug('[history] Parsed chart values JSON:', JSON.stringify({
+            count: history.length,
+            labels: history.map(point => point.label),
+            prices: history.map(point => Number(point.price))
+        }));
         
-        if (history.length === 0) throw new Error('Empty historical data');
+        if (history.length === 0) throw new Error('Empty hourly historical data');
         
         const labels = history.map(h => h.label);
-        const prices = history.map(h => h.price);
+        const prices = history.map(h => Number(h.price));
 
-        const ctx = document.getElementById('historyChart').getContext('2d');
+        const canvas = document.getElementById('historyChart');
+        if (!canvas) throw new Error('History chart canvas was not found');
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('History chart canvas context was not available');
         
         // Define color theme based on stock trend (Gain vs Loss)
         const lineColor = isPositive ? 'rgb(16, 185, 129)' : 'rgb(244, 63, 94)';
@@ -643,7 +673,8 @@ async function drawHistoryChart(symbol, isPositive) {
         });
 
     } catch (err) {
-        console.error('Chart error:', err);
+        console.error('[history] Chart error:', err);
+        chartError.querySelector('span').textContent = `Unable to load chart: ${err.message}`;
         chartError.classList.remove('hide');
     } finally {
         chartLoading.classList.add('hide');

@@ -190,19 +190,49 @@ def get_stock_history(symbol):
         
     try:
         ticker = yf.Ticker(symbol)
-        df = ticker.history(period='5d', interval='1h')
-        
-        if df.empty:
-            # Fallback if 1h interval fails, try 1d
-            df = ticker.history(period='5d', interval='1d')
-            
+        # Yahoo Finance supports 1-hour candles for recent history. Do not
+        # fall back to daily candles because the chart explicitly promises
+        # hourly data.
+        df = ticker.history(
+            period='5d',
+            interval='1h',
+            auto_adjust=False,
+            prepost=False,
+        )
+
+        if df.empty or 'Close' not in df.columns:
+            return jsonify({
+                'symbol': symbol,
+                'history': [],
+                'error': 'No hourly history is currently available'
+            }), 503
+
         history_list = []
         for index, row in df.iterrows():
+            close = _as_float(row['Close'])
+            if close is None:
+                continue
+
             history_list.append({
-                'timestamp': index.strftime('%Y-%m-%d %H:%M'),
+                'timestamp': index.isoformat(),
                 'label': index.strftime('%b %d, %I:%M %p'),
-                'price': round(float(row['Close']), 2)
+                'price': round(close, 2)
             })
+
+        if not history_list:
+            return jsonify({
+                'symbol': symbol,
+                'history': [],
+                'error': 'No valid hourly prices were returned'
+            }), 503
+
+        logging.info(
+            'History response for %s: points=%d, first=%s, last=%s',
+            symbol,
+            len(history_list),
+            history_list[0],
+            history_list[-1]
+        )
             
         return jsonify({
             'symbol': symbol,

@@ -80,6 +80,10 @@ body {
     gap: 2rem;
 }
 
+.hide {
+    display: none !important;
+}
+
 /* GLASSMORPHIC STANDARD CARD */
 .glass-card {
     background: var(--bg-card);

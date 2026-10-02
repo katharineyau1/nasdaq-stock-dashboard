@@ -36,12 +36,10 @@ class TestDashboardAPI(unittest.TestCase):
 
     @patch("app.yf.Tickers")
     def test_get_stocks_contract(self, mock_tickers_cls):
-        """Verify GET /api/stocks returns valid JSON schema and correct constituent data."""
-        # Create mock tickers mapping
+        """Verify GET /api/stocks returns valid JSON schema, stocks, and associated ETFs."""
         mock_tickers_obj = MagicMock()
-        mock_tickers_dict = {}
 
-        for sym in NASDAQ_TOP_10:
+        def make_mock_ticker():
             mock_ticker = MagicMock()
             mock_ticker.fast_info = {
                 "last_price": 150.25,
@@ -52,9 +50,14 @@ class TestDashboardAPI(unittest.TestCase):
                 "day_low": 147.50,
             }
             mock_ticker.info = {}
-            mock_tickers_dict[sym] = mock_ticker
+            return mock_ticker
 
-        mock_tickers_obj.tickers = mock_tickers_dict
+        mock_tickers_dict = {}
+        for sym in list(NASDAQ_TOP_10.keys()) + ["NVDL", "NVDU", "NVDS", "AAPU"]:
+            mock_tickers_dict[sym] = make_mock_ticker()
+
+        mock_tickers_obj.tickers = MagicMock()
+        mock_tickers_obj.tickers.get.side_effect = lambda k, d=None: mock_tickers_dict.get(k, make_mock_ticker())
         mock_tickers_cls.return_value = mock_tickers_obj
 
         response = self.client.get("/api/stocks")
@@ -70,7 +73,8 @@ class TestDashboardAPI(unittest.TestCase):
         # Validate schema of each stock item
         required_fields = {
             "symbol", "name", "price", "priceChange", "percentChange",
-            "previousClose", "marketCap", "volume", "dayHigh", "dayLow"
+            "previousClose", "marketCap", "volume", "dayHigh", "dayLow",
+            "associated_etfs"
         }
         for stock in data["stocks"]:
             for field in required_fields:
@@ -78,25 +82,28 @@ class TestDashboardAPI(unittest.TestCase):
             self.assertIsInstance(stock["price"], float)
             self.assertIsInstance(stock["marketCap"], int)
             self.assertIsInstance(stock["volume"], int)
+            self.assertIsInstance(stock["associated_etfs"], list)
+
+        # Check that NVDA has associated ETFs including NVDL
+        nvda_stock = next(s for s in data["stocks"] if s["symbol"] == "NVDA")
+        etf_tickers = [e["symbol"] for e in nvda_stock["associated_etfs"]]
+        self.assertIn("NVDL", etf_tickers)
 
     @patch("app.yf.Tickers")
     def test_caching_and_force_refresh(self, mock_tickers_cls):
         """Verify 60s cache serves cached data and ?force=true forces live refresh."""
         mock_tickers_obj = MagicMock()
-        mock_tickers_dict = {}
-        for sym in NASDAQ_TOP_10:
-            mock_ticker = MagicMock()
-            mock_ticker.fast_info = {
-                "last_price": 200.0,
-                "previous_close": 195.0,
-                "market_cap": 1000000000,
-                "last_volume": 100000,
-                "day_high": 205.0,
-                "day_low": 190.0,
-            }
-            mock_ticker.info = {}
-            mock_tickers_dict[sym] = mock_ticker
-        mock_tickers_obj.tickers = mock_tickers_dict
+        mock_ticker = MagicMock()
+        mock_ticker.fast_info = {
+            "last_price": 200.0,
+            "previous_close": 195.0,
+            "market_cap": 1000000000,
+            "last_volume": 100000,
+            "day_high": 205.0,
+            "day_low": 190.0,
+        }
+        mock_ticker.info = {}
+        mock_tickers_obj.tickers.get.return_value = mock_ticker
         mock_tickers_cls.return_value = mock_tickers_obj
 
         # 1st call: Miss -> Fresh data
@@ -167,6 +174,23 @@ class TestDashboardAPI(unittest.TestCase):
         self.assertIn("timestamp", first_point)
         self.assertIn("label", first_point)
         self.assertEqual(first_point["price"], 220.5)
+
+    @patch("app.yf.Ticker")
+    def test_get_history_etf_symbol(self, mock_ticker_cls):
+        """Verify ETF symbol history returns formatted hourly timestamps and prices."""
+        index = pd.date_range("2026-09-28 09:30:00", periods=3, freq="h", tz="America/New_York")
+        df = pd.DataFrame({"Close": [40.1, 40.5, 41.2]}, index=index)
+
+        mock_ticker = MagicMock()
+        mock_ticker.history.return_value = df
+        mock_ticker_cls.return_value = mock_ticker
+
+        response = self.client.get("/api/stocks/nvdl/history")
+        self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        self.assertEqual(data["symbol"], "NVDL")
+        self.assertEqual(len(data["history"]), 3)
 
     @patch("app.yf.Ticker")
     def test_get_history_empty_data_returns_503(self, mock_ticker_cls):

@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nasdaq-10 Real-Time Stock Dashboard</title>
-    <meta name="description" content="Live tracking and analytics for the top 10 US stocks traded on Nasdaq. Custom Glassmorphic design, real-time auto-refresh, and interactive trend charts.">
+    <meta name="description"
+        content="Live tracking and analytics for the top 10 US stocks traded on Nasdaq. Custom Glassmorphic design, real-time auto-refresh, and interactive trend charts.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
@@ -16,31 +20,34 @@
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
-        
+
         <!-- HEADER SECTION -->
         <header class="app-header">
             <div class="header-branding">
                 <div class="logo-glow"></div>
                 <div class="logo-icon"><i class="fa-solid fa-chart-line-up"></i></div>
                 <div>
-                    <h1>NASDAQ<span class="accent-text">-10</span></h1>
-                    <p class="subtitle">Real-Time Market Analytics</p>
+                    <h1>NASDAQ<span class="accent-text">-Top 10</span></h1>
+                    <p class="subtitle">Real-Time Market Analytics For The Top 10 Nasdaq Stocks and ETFs</p>
                 </div>
             </div>
-            
+
             <div class="header-meta">
                 <div id="market-status" class="market-status-pill closed">
                     <span class="status-indicator"></span>
                     <span class="status-text">Checking Market...</span>
                 </div>
-                
+
                 <div class="refresh-control">
                     <div class="timer-circle-container">
                         <svg class="timer-svg" viewBox="0 0 36 36">
-                            <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path id="timer-progress" class="timer-progress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="timer-bg"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path id="timer-progress" class="timer-progress" stroke-dasharray="100, 100"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
                         <span id="countdown-text" class="countdown-seconds">60</span>
                     </div>
@@ -74,7 +81,7 @@
                     <span class="tile-desc">Combined Valuation</span>
                 </div>
             </div>
-            
+
             <!-- Top Gainer -->
             <div class="summary-tile glass-card">
                 <div class="tile-icon gainer-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
@@ -113,9 +120,10 @@
                 <input type="text" id="stock-search" placeholder="Search by ticker or name..." autocomplete="off">
                 <button id="clear-search-btn" class="clear-btn hide"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            
+
             <div class="view-switcher glass-card">
-                <button id="grid-view-btn" class="view-btn active" title="Grid View"><i class="fa-solid fa-grip"></i></button>
+                <button id="grid-view-btn" class="view-btn active" title="Grid View"><i
+                        class="fa-solid fa-grip"></i></button>
                 <button id="list-view-btn" class="view-btn" title="List View"><i class="fa-solid fa-list"></i></button>
             </div>
         </div>
@@ -146,14 +154,15 @@
         <footer class="app-footer">
             <p>Data provided by Yahoo Finance • Automatic refresh interval is configurable.</p>
             <p class="footer-tag">Designed By Katharine Yau</p>
-            <p class="footer-tag">Developed with <i class="fa-solid fa-heart accent-text animate-pulse"></i> by Antigravity</p>
+            <p class="footer-tag">Developed with <i class="fa-solid fa-heart accent-text animate-pulse"></i> by
+                Antigravity</p>
         </footer>
     </div>
     <!-- STOCK DETAILS MODAL OVERLAY -->
     <div id="stock-details-modal" class="modal-overlay hide">
         <div class="modal-content glass-card">
             <button id="close-modal-btn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
-            
+
             <div class="modal-header">
                 <div class="modal-title-area">
                     <div class="symbol-badge-container">
@@ -225,4 +234,5 @@
     <!-- Custom Logic Script -->
     <script src="app.js"></script>
 </body>
+
 </html>

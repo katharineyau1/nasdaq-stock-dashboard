@@ -26,6 +26,37 @@ NASDAQ_TOP_10 = {
     'AMD': 'Advanced Micro Devices Inc.'
 }
 
+# Single-Stock ETF Catalog from data/etf.json
+import json
+ETF_FILE_PATH = os.path.join(os.path.dirname(__file__), 'data', 'etf.json')
+
+def load_etf_catalog():
+    if not os.path.exists(ETF_FILE_PATH):
+        return {}
+    try:
+        with open(ETF_FILE_PATH, 'r') as f:
+            data = json.load(f)
+        return {
+            item['ticker']: item.get('associated_etfs', [])
+            for item in data.get('nasdaq_top_10_single_stock_etfs', [])
+        }
+    except Exception as e:
+        logging.error(f"Failed to load ETF catalog: {e}")
+        return {}
+
+ETF_CATALOG = load_etf_catalog()
+ALL_ETF_MAP = {
+    etf['ticker']: {
+        'name': f"{parent} {etf.get('type', 'ETF')} ({etf.get('multiplier') or etf.get('strategy', '')})".strip(),
+        'parent': parent,
+        'type': etf.get('type', 'ETF'),
+        'multiplier': etf.get('multiplier', ''),
+        'strategy': etf.get('strategy', '')
+    }
+    for parent, etfs in ETF_CATALOG.items()
+    for etf in etfs
+}
+
 # Cache structure
 cache = {
     'data': None,
@@ -47,58 +78,105 @@ def _as_float(value):
     return value
 
 
-def fetch_stock_data():
-    """Fetches key parameters for top 10 Nasdaq stocks using yfinance."""
-    symbols = list(NASDAQ_TOP_10.keys())
-    tickers = yf.Tickers(' '.join(symbols))
+def _parse_ticker_quote(ticker_obj, symbol, name):
+    """Extract standard quote payload from a yfinance Ticker object."""
+    fast_info = getattr(ticker_obj, 'fast_info', {}) or {}
+    info = getattr(ticker_obj, 'info', {}) or {}
 
-    results = []
+    last_price = _as_float(fast_info.get('last_price'))
+    previous_close = _as_float(fast_info.get('previous_close'))
 
-    for symbol in symbols:
-        ticker = tickers.tickers[symbol]
+    if last_price is None or previous_close is None:
         try:
-            fast_info = ticker.fast_info or {}
-            info = ticker.info or {}
+            hist = ticker_obj.history(period='5d', auto_adjust=True)
+            if not hist.empty:
+                if last_price is None:
+                    last_price = _as_float(hist['Close'].iloc[-1])
+                if previous_close is None and len(hist) > 1:
+                    previous_close = _as_float(hist['Close'].iloc[-2])
+        except Exception:
+            pass
 
-            last_price = _as_float(fast_info.get('last_price'))
-            previous_close = _as_float(fast_info.get('previous_close'))
+    if last_price is None:
+        last_price = _as_float(info.get('regularMarketPrice') or info.get('previousClose'))
 
-            if last_price is None or previous_close is None:
-                hist = ticker.history(period='5d', auto_adjust=True)
-                if not hist.empty:
-                    if last_price is None:
-                        last_price = _as_float(hist['Close'].iloc[-1])
-                    if previous_close is None and len(hist) > 1:
-                        previous_close = _as_float(hist['Close'].iloc[-2])
+    if previous_close is None:
+        previous_close = _as_float(info.get('previousClose'))
 
-            if last_price is None:
-                last_price = _as_float(info.get('regularMarketPrice') or info.get('previousClose'))
+    if last_price is not None and previous_close not in (None, 0):
+        price_change = float(last_price) - float(previous_close)
+        percent_change = (price_change / float(previous_close)) * 100
+    else:
+        price_change = 0.0
+        percent_change = 0.0
 
-            if previous_close is None:
-                previous_close = _as_float(info.get('previousClose'))
+    return {
+        'symbol': symbol,
+        'name': name,
+        'price': round(float(last_price), 2) if last_price is not None else 0.0,
+        'priceChange': round(float(price_change), 2),
+        'percentChange': round(float(percent_change), 2),
+        'previousClose': round(float(previous_close), 2) if previous_close is not None else 0.0,
+        'marketCap': int((fast_info.get('market_cap') or info.get('marketCap') or 0) or 0),
+        'volume': int((fast_info.get('last_volume') or info.get('volume') or 0) or 0),
+        'dayHigh': round(float((fast_info.get('day_high') or info.get('dayHigh') or 0) or 0), 2),
+        'dayLow': round(float((fast_info.get('day_low') or info.get('dayLow') or 0) or 0), 2),
+    }
 
-            if last_price is not None and previous_close not in (None, 0):
-                price_change = float(last_price) - float(previous_close)
-                percent_change = (price_change / float(previous_close)) * 100
-            else:
-                price_change = 0.0
-                percent_change = 0.0
 
-            results.append({
-                'symbol': symbol,
-                'name': NASDAQ_TOP_10[symbol],
-                'price': round(float(last_price), 2) if last_price is not None else 0.0,
-                'priceChange': round(float(price_change), 2),
-                'percentChange': round(float(percent_change), 2),
-                'previousClose': round(float(previous_close), 2) if previous_close is not None else 0.0,
-                'marketCap': int((fast_info.get('market_cap') or info.get('marketCap') or 0) or 0),
-                'volume': int((fast_info.get('last_volume') or info.get('volume') or 0) or 0),
-                'dayHigh': round(float((fast_info.get('day_high') or info.get('dayHigh') or 0) or 0), 2),
-                'dayLow': round(float((fast_info.get('day_low') or info.get('dayLow') or 0) or 0), 2),
+def fetch_stock_data():
+    """Fetches key parameters for top 10 Nasdaq stocks and their associated ETFs."""
+    stock_symbols = list(NASDAQ_TOP_10.keys())
+    etf_symbols = list(ALL_ETF_MAP.keys())
+    all_symbols = stock_symbols + etf_symbols
+
+    tickers = yf.Tickers(' '.join(all_symbols))
+
+    # Resolve ETF quotes
+    etf_quotes = {}
+    for etf_sym, meta in ALL_ETF_MAP.items():
+        try:
+            t_obj = tickers.tickers.get(etf_sym)
+            quote = _parse_ticker_quote(t_obj, etf_sym, meta['name'])
+            quote.update({
+                'type': meta['type'],
+                'multiplier': meta['multiplier'],
+                'strategy': meta['strategy'],
+                'parent': meta['parent']
             })
+            etf_quotes[etf_sym] = quote
+        except Exception as e:
+            logging.error(f"Error fetching ETF data for {etf_sym}: {str(e)}")
+            etf_quotes[etf_sym] = {
+                'symbol': etf_sym,
+                'name': meta['name'],
+                'price': 0.0,
+                'priceChange': 0.0,
+                'percentChange': 0.0,
+                'previousClose': 0.0,
+                'marketCap': 0,
+                'volume': 0,
+                'dayHigh': 0.0,
+                'dayLow': 0.0,
+                'type': meta['type'],
+                'multiplier': meta['multiplier'],
+                'strategy': meta['strategy'],
+                'parent': meta['parent'],
+                'error': True
+            }
 
+    # Resolve Top 10 Stocks with nested associated ETFs
+    results = []
+    for symbol in stock_symbols:
+        try:
+            t_obj = tickers.tickers.get(symbol)
+            stock_data = _parse_ticker_quote(t_obj, symbol, NASDAQ_TOP_10[symbol])
+            associated_tickers = [e['ticker'] for e in ETF_CATALOG.get(symbol, [])]
+            stock_data['associated_etfs'] = [etf_quotes[t] for t in associated_tickers if t in etf_quotes]
+            results.append(stock_data)
         except Exception as e:
             logging.error(f"Error fetching data for {symbol}: {str(e)}")
+            associated_tickers = [e['ticker'] for e in ETF_CATALOG.get(symbol, [])]
             results.append({
                 'symbol': symbol,
                 'name': NASDAQ_TOP_10[symbol],
@@ -110,7 +188,8 @@ def fetch_stock_data():
                 'volume': 0,
                 'dayHigh': 0.0,
                 'dayLow': 0.0,
-                'error': True
+                'error': True,
+                'associated_etfs': [etf_quotes[t] for t in associated_tickers if t in etf_quotes]
             })
 
     return results
@@ -185,8 +264,9 @@ def get_stocks():
 def get_stock_history(symbol):
     """Fetches 5-day historical data with 1-hour interval for a specific stock."""
     symbol = symbol.upper()
-    if symbol not in NASDAQ_TOP_10:
-        return jsonify({'error': 'Invalid stock symbol'}), 400
+    valid_symbols = set(NASDAQ_TOP_10.keys()) | set(ALL_ETF_MAP.keys())
+    if symbol not in valid_symbols:
+        return jsonify({'error': 'Invalid stock or ETF symbol'}), 400
         
     try:
         ticker = yf.Ticker(symbol)

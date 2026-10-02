@@ -1,0 +1,264 @@
+{
+    "nasdaq_top_10_single_stock_etfs": [
+        {
+            "stock_name": "NVIDIA",
+            "ticker": "NVDA",
+            "associated_etfs": [
+                {
+                    "ticker": "NVDL",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "NVDU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "NVDS",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "NVDD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "NVDY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                },
+                {
+                    "ticker": "NVIB",
+                    "type": "Option Income",
+                    "strategy": "Defined Income Boost"
+                }
+            ]
+        },
+        {
+            "stock_name": "Apple",
+            "ticker": "AAPL",
+            "associated_etfs": [
+                {
+                    "ticker": "AAPU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AAPB",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AAPD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "APLY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                }
+            ]
+        },
+        {
+            "stock_name": "Microsoft",
+            "ticker": "MSFT",
+            "associated_etfs": [
+                {
+                    "ticker": "MSFU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "MSFD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "MSFY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                },
+                {
+                    "ticker": "MSST",
+                    "type": "Option Income",
+                    "strategy": "Lite Balanced Yield"
+                }
+            ]
+        },
+        {
+            "stock_name": "Amazon",
+            "ticker": "AMZN",
+            "associated_etfs": [
+                {
+                    "ticker": "AMZU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AMZD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "AMZY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                }
+            ]
+        },
+        {
+            "stock_name": "Alphabet",
+            "ticker": "GOOGL",
+            "associated_etfs": [
+                {
+                    "ticker": "GGLL",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "GOOY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                },
+                {
+                    "ticker": "GOIB",
+                    "type": "Option Income",
+                    "strategy": "Defined Income Boost"
+                }
+            ]
+        },
+        {
+            "stock_name": "Meta Platforms",
+            "ticker": "META",
+            "associated_etfs": [
+                {
+                    "ticker": "METU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "METD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "FBY",
+                    "type": "YieldMax META Option Income Strategy",
+                    "strategy": "Covered Call"
+                },
+                {
+                    "ticker": "MEIB",
+                    "type": "Direxion META Defined Income Boost",
+                    "strategy": "Defined Income Boost"
+                }
+            ]
+        },
+        {
+            "stock_name": "Tesla",
+            "ticker": "TSLA",
+            "associated_etfs": [
+                {
+                    "ticker": "TSLL",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "TSLS",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "TSLI",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "TSLY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                },
+                {
+                    "ticker": "TSIB",
+                    "type": "Option Income",
+                    "strategy": "Defined Income Boost"
+                }
+            ]
+        },
+        {
+            "stock_name": "Broadcom",
+            "ticker": "AVGO",
+            "associated_etfs": [
+                {
+                    "ticker": "AVL",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AVGG",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AVS",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "AVGW",
+                    "type": "Option Income",
+                    "strategy": "WeeklyPay Swap"
+                }
+            ]
+        },
+        {
+            "stock_name": "Advanced Micro Devices",
+            "ticker": "AMD",
+            "associated_etfs": [
+                {
+                    "ticker": "AMUU",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AMDL",
+                    "type": "Leveraged Bull",
+                    "multiplier": "2x Long"
+                },
+                {
+                    "ticker": "AMDD",
+                    "type": "Inverse Bear",
+                    "multiplier": "-1x Short"
+                },
+                {
+                    "ticker": "AMDY",
+                    "type": "Option Income",
+                    "strategy": "Covered Call"
+                }
+            ]
+        },
+        {
+            "stock_name": "Micron Technology, Inc.",
+            "ticker": "MU",
+            "associated_etfs": [
+                {
+                    "ticker": "MUU",
+                    "issuer": "Direxion",
+                    "strategy": "2x Leveraged Long Micron Daily Target"
+                },
+                {
+                    "ticker": "MUD",
+                    "issuer": "GraniteShares",
+                    "strategy": "2x Inverse Bear Micron Daily Target"
+                },
+                {
+                    "ticker": "MNY",
+                    "issuer": "YieldMax",
+                    "strategy": "Micron Option Income Strategy (Covered Call)"
+                }
+            ]
+        }
+    ]
+}

@@ -9,8 +9,8 @@ A real-time analytics web dashboard displaying performance metrics and 5-day cha
 - **GOOGL** (Alphabet Inc.)
 - **AVGO** (Broadcom Inc.)
 - **TSLA** (Tesla, Inc.)
-- **COST** (Costco Wholesale Corporation)
-- **NFLX** (Netflix, Inc.)
+- **MU** (Micron Technology Inc.)
+- **AMD** (Advanced Micro Devices Inc.)
 
 Built using a **Python Flask backend** (retrieving real-time details from Yahoo Finance via `yfinance`) and a **modern HTML5/Vanilla CSS/JavaScript frontend** with a stunning dark Glassmorphic layout.
 
@@ -21,7 +21,7 @@ Built using a **Python Flask backend** (retrieving real-time details from Yahoo 
 1. **Top Highlights Row**: Instantly displays the Volume Leader, Total Nasdaq-10 combined Market Cap, Top Gainer, and Top Loser.
 2. **Interactive View Toggling**: Seamlessly switch between a grid of visual glass-cards or a detailed tabular list.
 3. **Smart Cache System**: Implements a 60-second backend query cache preventing Yahoo Finance API rate-limiting or blocking.
-4. **Auto-refresh**: Rotates a 1-minute countdown progress ring in the header, refreshing quotes automatically. Supports manual bypass refresh.
+4. **Auto-refresh**: Configurable countdown progress ring in the header (1 min, 10 min, or 1 hour; default 1 hour), refreshing quotes automatically. Supports manual bypass refresh.
 5. **Interactive Sparkline charts**: Clicking on any stock card/row opens a detailed modal drawer presenting a 5-day historical hourly price chart mapped using Chart.js.
 6. **Dynamic Search & Filtering**: Fast client-side filtering matching search terms instantly against symbols or company names.
 7. **Price Update Flashes**: Visual indicators (glowing green/red flashes) highlight when values rise or fall.
@@ -64,13 +64,23 @@ Built using a **Python Flask backend** (retrieving real-time details from Yahoo 
    http://127.0.0.1:5001
    ```
 
+### Running Tests
+
+Execute the automated test suite with Python's built-in `unittest` runner:
+```bash
+python -m unittest discover tests -v
+```
+
 ---
 
 ## Project Structure
 
 - `app.py` - Flask backend providing the API endpoints and static file serving.
 - `requirements.txt` - Python backend dependencies.
-- `static/` - Frontend directory.
-  - `index.html` - Semantic structure.
-  - `style.css` - Custom styling tokens, layout grids, animations, and transitions.
+- `REVERSED_SPEC.md` - Complete reverse-engineered system architecture and technical specification.
+- `data/` - Static market assets (e.g., `etf.json` single-stock ETF mappings).
+- `static/` - Frontend single-page application.
+  - `index.html` - Semantic structure and layout.
+  - `style.css` - Custom glassmorphic styling tokens, layout grids, animations, and transitions.
   - `app.js` - Dynamic UI binding, polling timers, and Chart.js integrations.
+- `tests/` - Automated unit and integration test suite.

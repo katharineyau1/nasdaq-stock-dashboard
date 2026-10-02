@@ -5,6 +5,13 @@ import logging
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 import yfinance as yf
+try:
+    from curl_cffi import requests as curl_requests
+    _YF_SESSION = curl_requests.Session(impersonate="chrome")
+    logging.info("curl_cffi session initialised (browser TLS impersonation active)")
+except ImportError:
+    _YF_SESSION = None
+    logging.warning("curl_cffi not available; Yahoo Finance may block cloud server requests")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -130,7 +137,7 @@ def fetch_stock_data():
     etf_symbols = list(ALL_ETF_MAP.keys())
     all_symbols = stock_symbols + etf_symbols
 
-    tickers = yf.Tickers(' '.join(all_symbols))
+    tickers = yf.Tickers(' '.join(all_symbols), session=_YF_SESSION)
 
     # Resolve ETF quotes
     etf_quotes = {}
@@ -269,7 +276,7 @@ def get_stock_history(symbol):
         return jsonify({'error': 'Invalid stock or ETF symbol'}), 400
         
     try:
-        ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(symbol, session=_YF_SESSION)
         # Yahoo Finance supports 1-hour candles for recent history. Do not
         # fall back to daily candles because the chart explicitly promises
         # hourly data.

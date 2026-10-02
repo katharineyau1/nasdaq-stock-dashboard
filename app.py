@@ -22,8 +22,8 @@ NASDAQ_TOP_10 = {
     'GOOGL': 'Alphabet Inc.',
     'AVGO': 'Broadcom Inc.',
     'TSLA': 'Tesla, Inc.',
-    'COST': 'Costco Wholesale Corporation',
-    'NFLX': 'Netflix, Inc.'
+    'MU': 'Micron Technology Inc.',
+    'AMD': 'Advanced Micro Devices Inc.'
 }
 
 # Cache structure

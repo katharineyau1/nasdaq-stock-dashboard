@@ -1,5 +1,6 @@
 // GLOBAL APPLICATION STATE
 let stocksData = [];
+let etfsLookup = {};
 let viewMode = 'grid'; // 'grid' or 'list'
 let searchQuery = '';
 let refreshIntervalSeconds = 3600;
@@ -211,6 +212,14 @@ async function fetchStocks(force = false) {
 
         stocksData = data.stocks;
         
+        // Rebuild ETF lookup map
+        etfsLookup = {};
+        stocksData.forEach(s => {
+            (s.associated_etfs || []).forEach(e => {
+                etfsLookup[e.symbol] = e;
+            });
+        });
+        
         // Update Metadata
         const date = new Date(data.lastUpdated * 1000);
         lastUpdatedTime.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -402,15 +411,45 @@ function renderGridView(stocks, oldPrices) {
                     <span class="stat-val">${defVolume(stock.volume)}</span>
                 </div>
             </div>
+
+            <div class="card-etfs-shelf">
+                <div class="etf-shelf-header">
+                    <span>Single-Stock ETFs</span>
+                    <span class="etf-count">${(stock.associated_etfs || []).length}</span>
+                </div>
+                <div class="etf-chips-wrapper">
+                    ${(stock.associated_etfs && stock.associated_etfs.length > 0)
+                        ? stock.associated_etfs.map(etf => `
+                            <a class="etf-chip" data-etf="${etf.symbol}" title="${etf.name} • ${etf.type}">
+                                <span class="etf-sym">${etf.symbol}</span>
+                                <span class="etf-price">$${etf.price > 0 ? etf.price.toFixed(2) : '—'}</span>
+                            </a>
+                        `).join('')
+                        : '<span class="etf-empty">No associated ETFs</span>'
+                    }
+                </div>
+            </div>
         `;
         
         // Remove flash classes after animation finishes so it can trigger again
         const priceEl = card.querySelector(`#price-${stock.symbol}`);
-        priceEl.addEventListener('animationend', () => {
-            priceEl.classList.remove('flash-price-up', 'flash-price-down');
+        if (priceEl) {
+            priceEl.addEventListener('animationend', () => {
+                priceEl.classList.remove('flash-price-up', 'flash-price-down');
+            });
+        }
+
+        // Card click drills down to stock details
+        card.addEventListener('click', () => openModal(stock.symbol));
+
+        // ETF chip clicks drill down to ETF details
+        card.querySelectorAll('.etf-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openModal(chip.getAttribute('data-etf'));
+            });
         });
 
-        card.addEventListener('click', () => openModal(stock.symbol));
         stocksContainer.appendChild(card);
     });
 }
@@ -456,26 +495,43 @@ function renderListView(stocks, oldPrices) {
             }
         }
         
+        const etfsHTML = (stock.associated_etfs && stock.associated_etfs.length > 0)
+            ? stock.associated_etfs.map(etf => `
+                <a class="etf-chip" data-etf="${etf.symbol}" title="${etf.name} • ${etf.type}">
+                    <span class="etf-sym">${etf.symbol}</span>
+                    <span class="etf-price">$${etf.price > 0 ? etf.price.toFixed(2) : '—'}</span>
+                </a>
+            `).join('')
+            : '<span class="etf-empty">No associated ETFs</span>';
+
         tableHTML += `
-            <div class="list-row ${trendClass}" data-symbol="${stock.symbol}">
-                <div class="list-symbol">${stock.symbol}</div>
-                <div class="list-name" title="${stock.name}">${stock.name}</div>
-                <div id="list-price-${stock.symbol}" class="list-price ${flashClass}">$${stock.price.toFixed(2)}</div>
-                <div class="list-change">${sign}${stock.priceChange.toFixed(2)} (${sign}${stock.percentChange.toFixed(2)}%)</div>
-                
-                <div class="list-range range-container" style="margin-bottom: 0;">
-                    <div class="range-labels" style="margin-bottom: 0.15rem;">
-                        <span>$${stock.dayLow.toFixed(2)}</span>
-                        <span>$${stock.dayHigh.toFixed(2)}</span>
+            <div class="list-item-wrapper">
+                <div class="list-row ${trendClass}" data-symbol="${stock.symbol}">
+                    <div class="list-symbol">${stock.symbol}</div>
+                    <div class="list-name" title="${stock.name}">${stock.name}</div>
+                    <div id="list-price-${stock.symbol}" class="list-price ${flashClass}">$${stock.price.toFixed(2)}</div>
+                    <div class="list-change">${sign}${stock.priceChange.toFixed(2)} (${sign}${stock.percentChange.toFixed(2)}%)</div>
+                    
+                    <div class="list-range range-container" style="margin-bottom: 0;">
+                        <div class="range-labels" style="margin-bottom: 0.15rem;">
+                            <span>$${stock.dayLow.toFixed(2)}</span>
+                            <span>$${stock.dayHigh.toFixed(2)}</span>
+                        </div>
+                        <div class="range-bar">
+                            <div class="range-fill" style="left: 0; width: 100%;"></div>
+                            <div class="range-marker" style="left: ${rangePercent}%;"></div>
+                        </div>
                     </div>
-                    <div class="range-bar">
-                        <div class="range-fill" style="left: 0; width: 100%;"></div>
-                        <div class="range-marker" style="left: ${rangePercent}%;"></div>
+                    
+                    <div class="list-volume">${defVolume(stock.volume)}</div>
+                    <div class="list-cap">${formatMarketCap(stock.marketCap)}</div>
+                </div>
+                <div class="list-etf-bar">
+                    <span class="etf-bar-label">Single-Stock ETFs:</span>
+                    <div class="etf-chips-wrapper">
+                        ${etfsHTML}
                     </div>
                 </div>
-                
-                <div class="list-volume">${defVolume(stock.volume)}</div>
-                <div class="list-cap">${formatMarketCap(stock.marketCap)}</div>
             </div>
         `;
     });
@@ -487,11 +543,21 @@ function renderListView(stocks, oldPrices) {
         const symbol = row.getAttribute('data-symbol');
         
         const priceEl = row.querySelector(`#list-price-${symbol}`);
-        priceEl.addEventListener('animationend', () => {
-            priceEl.classList.remove('flash-price-up', 'flash-price-down');
-        });
+        if (priceEl) {
+            priceEl.addEventListener('animationend', () => {
+                priceEl.classList.remove('flash-price-up', 'flash-price-down');
+            });
+        }
 
         row.addEventListener('click', () => openModal(symbol));
+    });
+
+    // Add Event Listeners for ETF chips
+    table.querySelectorAll('.etf-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openModal(chip.getAttribute('data-etf'));
+        });
     });
     
     stocksContainer.appendChild(table);
@@ -499,24 +565,31 @@ function renderListView(stocks, oldPrices) {
 
 // OPEN DETAILS MODAL OVERLAY AND DRAW CHART
 async function openModal(symbol) {
-    const stock = stocksData.find(s => s.symbol === symbol);
-    if (!stock) return;
+    const item = stocksData.find(s => s.symbol === symbol) || etfsLookup[symbol];
+    if (!item) return;
 
     // Populate standard metrics
-    modalSymbol.textContent = stock.symbol;
-    modalName.textContent = stock.name;
-    modalPrice.textContent = `$${stock.price.toFixed(2)}`;
+    modalSymbol.textContent = item.symbol;
+    modalName.textContent = item.name;
+    modalPrice.textContent = `$${(item.price || 0).toFixed(2)}`;
     
-    const isPositive = stock.priceChange >= 0;
+    const isPositive = (item.priceChange || 0) >= 0;
     const sign = isPositive ? '+' : '';
-    modalChange.textContent = `${sign}${stock.priceChange.toFixed(2)} (${sign}${stock.percentChange.toFixed(2)}%)`;
+    modalChange.textContent = `${sign}${(item.priceChange || 0).toFixed(2)} (${sign}${(item.percentChange || 0).toFixed(2)}%)`;
     modalChange.className = `modal-change ${isPositive ? 'positive' : 'negative'}`;
     
-    statOpen.textContent = `$${stock.previousClose.toFixed(2)}`; // Open info is estimated or equal to prev close
-    statPrevClose.textContent = `$${stock.previousClose.toFixed(2)}`;
-    statRange.textContent = `$${stock.dayLow.toFixed(2)} - $${stock.dayHigh.toFixed(2)}`;
-    statVolume.textContent = formatNumber(stock.volume);
-    statMarketCap.textContent = formatMarketCap(stock.marketCap);
+    const prevCloseStr = item.previousClose ? `$${item.previousClose.toFixed(2)}` : '—';
+    statOpen.textContent = prevCloseStr;
+    statPrevClose.textContent = prevCloseStr;
+    statRange.textContent = (item.dayLow && item.dayHigh) ? `$${item.dayLow.toFixed(2)} - $${item.dayHigh.toFixed(2)}` : '—';
+    statVolume.textContent = item.volume ? formatNumber(item.volume) : '—';
+    statMarketCap.textContent = item.marketCap ? formatMarketCap(item.marketCap) : '—';
+
+    // Market badge indicator
+    const marketBadge = modal.querySelector('.market-badge');
+    if (marketBadge) {
+        marketBadge.textContent = item.type ? `${item.type} ETF` : 'NASDAQ Listed';
+    }
 
     // Show modal
     modal.classList.remove('hide');

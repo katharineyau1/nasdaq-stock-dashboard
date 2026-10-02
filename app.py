@@ -117,10 +117,10 @@ def _parse_ticker_quote(ticker_obj, symbol, name):
         'priceChange': round(float(price_change), 2),
         'percentChange': round(float(percent_change), 2),
         'previousClose': round(float(previous_close), 2) if previous_close is not None else 0.0,
-        'marketCap': int((fast_info.get('market_cap') or info.get('marketCap') or 0) or 0),
-        'volume': int((fast_info.get('last_volume') or info.get('volume') or 0) or 0),
-        'dayHigh': round(float((fast_info.get('day_high') or info.get('dayHigh') or 0) or 0), 2),
-        'dayLow': round(float((fast_info.get('day_low') or info.get('dayLow') or 0) or 0), 2),
+        'marketCap': int(_as_float(fast_info.get('market_cap') or info.get('marketCap') or info.get('enterpriseValue') or 0) or 0),
+        'volume': int(_as_float(fast_info.get('last_volume') or info.get('volume') or info.get('regularMarketVolume') or 0) or 0),
+        'dayHigh': round(_as_float(fast_info.get('day_high') or info.get('dayHigh') or info.get('regularMarketDayHigh') or 0) or 0, 2),
+        'dayLow': round(_as_float(fast_info.get('day_low') or info.get('dayLow') or info.get('regularMarketDayLow') or 0) or 0, 2),
     }
 
 

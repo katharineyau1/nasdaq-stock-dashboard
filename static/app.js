@@ -581,9 +581,9 @@ async function openModal(symbol) {
     const prevCloseStr = item.previousClose ? `$${item.previousClose.toFixed(2)}` : '—';
     statOpen.textContent = prevCloseStr;
     statPrevClose.textContent = prevCloseStr;
-    statRange.textContent = (item.dayLow && item.dayHigh) ? `$${item.dayLow.toFixed(2)} - $${item.dayHigh.toFixed(2)}` : '—';
-    statVolume.textContent = item.volume ? formatNumber(item.volume) : '—';
-    statMarketCap.textContent = item.marketCap ? formatMarketCap(item.marketCap) : '—';
+    statRange.textContent = (item.dayLow > 0 && item.dayHigh > 0) ? `$${item.dayLow.toFixed(2)} - $${item.dayHigh.toFixed(2)}` : '—';
+    statVolume.textContent = (item.volume > 0) ? formatNumber(item.volume) : '—';
+    statMarketCap.textContent = (item.marketCap > 0) ? formatMarketCap(item.marketCap) : '—';
 
     // Market badge indicator
     const marketBadge = modal.querySelector('.market-badge');
